@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2022", // Versão de Compilação do NODE - TARGETS
+    "sourceMap": true,     
+    "outDir": "dist", // Pasta para gerar a Build - TARGETS
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "module": "CommonJS",
+    "forceConsistentCasingInFileNames": true, // Checkagem de importações para suporte a todas as plataformas - TARGETS
+    "moduleResolution": "node", // Importar arquivos de uma pasta ou arquivo diretamente - MODULOS
+    "baseUrl": "./src",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "declaration": true,
+    "removeComments": true,
+    "allowSyntheticDefaultImports": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "strict": true,
+    "paths": {
+      "@/*":["*"],
+      "@/tests/*":["../testes/*"]
+    },
+    "strictNullChecks": true
+  },
+  "exclude": ["node_modules"],
+  "include": ["testes/*.test.ts", "testes/**/*.test.ts", "testes/**/*.spec.ts", "src/*.ts", "src/**/*.ts", "./**.json", "./**/**.json", "./*.config.ts",]
+}

@@ -1,0 +1,18 @@
+{
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "parserOptions": {
+        "project": "./jest.config.json",
+        "tsconfigRootDir": "__dirname",
+        "sourceType": "module",
+    },
+    "eslint.workingDirectories": [
+        "src",
+        "testes",
+        "node_modules"
+    ],
+}
+/** 
+* in MacOS ir Windows Ctrl + P
+* >Select the typescript version used for
+* > use Workspace version
+*/
