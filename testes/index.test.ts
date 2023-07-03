@@ -8,7 +8,7 @@ class CheckLastEventStatus {
   // }    
     
   async perform (groupID: string): Promise<void> {
-    await this.loadLastEventRepository.loadLastEvent('')
+    await this.loadLastEventRepository.loadLastEvent(groupID)
   }
 }
 
