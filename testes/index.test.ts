@@ -1,3 +1,4 @@
+import { set, reset } from 'mockdate';
 
 class CheckLastEventStatus {
   constructor(private readonly loadLastEventRepository: LoadLastEventRepository) { }
@@ -8,33 +9,56 @@ class CheckLastEventStatus {
   // }    
 
   async perform(groupID: string): Promise<string> {
-    await this.loadLastEventRepository.loadLastEvent(groupID)
-    return 'done'
+    const event = await this.loadLastEventRepository.loadLastEvent(groupID)
+    return event === undefined ? 'done' : 'active'
   }
 }
 
 interface LoadLastEventRepository {
-  loadLastEvent: (groupID: string) => Promise<undefined>
+  loadLastEvent: (groupID: string) => Promise<{ dataFinal:  Date} | undefined>
 }
 
 // o mock ta preocupado apenas com o input de um repositorio para a aplicação funcionar
 class LoadLastEventRepositorySpy implements LoadLastEventRepository {
   groupID?: string
   callsCount = 0
-  output: undefined
+  output?: { dataFinal:  Date} 
 
-  async loadLastEvent(groupID: string): Promise<undefined> {
+  async loadLastEvent(groupID: string): Promise<{ dataFinal:  Date} | undefined> {
     this.groupID = groupID
     this.callsCount++
+    spyOn.name
     return this.output
+    
+  }
+}
+
+type sutOutput = {
+  sut: CheckLastEventStatus,
+  loadLastEventRepository: LoadLastEventRepositorySpy
+}
+const makeSut = (): sutOutput => {
+  const loadLastEventRepository = new LoadLastEventRepositorySpy()
+  const sut = new CheckLastEventStatus(loadLastEventRepository)
+  // por padrao, o sut veio substituir o checkLastEventStatus que é o que queremos testar
+
+  return {
+    sut, loadLastEventRepository
   }
 }
 
 describe('CheckLastEventStatus', () => {
+
+  beforeAll(() => {
+    set (new Date())
+  })
+
+  afterAll(() => {
+    reset (new Date())
+  })
+
   it('should get last event data', async () => {
-    const loadLastEventRepository = new LoadLastEventRepositorySpy()
-    const sut = new CheckLastEventStatus(loadLastEventRepository) 
-    // por padrao, o sut veio substituir o checkLastEventStatus que é o que queremos testar   
+    const { sut, loadLastEventRepository } = makeSut()
 
     await sut.perform('any_group_id')
 
@@ -44,16 +68,27 @@ describe('CheckLastEventStatus', () => {
 
   })
 
-  it('retorna o status quando não temos mais eventos', async () => {
-    const loadLastEventRepository = new LoadLastEventRepositorySpy()
+  it('retorna o status quando não temos eventos', async () => {
+    const { sut, loadLastEventRepository } = makeSut()
     loadLastEventRepository.output = undefined
-    const sut = new CheckLastEventStatus(loadLastEventRepository)
 
     const status = await sut.perform('any_group_id')
 
     expect(status).toBe('done')
 
   })
-})
 
+  it('retorna o status quando o tempo atual esta antes do fim do evento ', async () => {
+    const { sut, loadLastEventRepository } = makeSut()
+    loadLastEventRepository.output = {
+      dataFinal: new Date( new Date().getTime() + 1)
+    }
+  
+    const status = await sut.perform('any_group_id')
+  
+    expect(status).toBe('active')
+  
+  })
+
+})
 
