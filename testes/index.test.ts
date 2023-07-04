@@ -1,6 +1,6 @@
 //import { MockDate } from 'mockdate';
 //import { set, reset } from 'mockdate';
-//import MockDate from 'mockdate'
+//import MockDate from 'jest'
 
 
 class CheckLastEventStatus {
@@ -16,22 +16,23 @@ class CheckLastEventStatus {
   async perform ({ groupID }: {groupID: string }): Promise<string> {
     const event = await this.loadLastEventRepository.loadLastEvent({ groupID })
     //return event === undefined ? 'done' : 'active' //usado quando se tem 2 opções 
-    
+
+    const now = new Date()
+/*
     //comparação acoplada
     if (event === undefined) return 'done'
-    const now = new Date()
-    return event.dataFinal > now ? 'active' : 'inReview' 
-  
-/*
+    return event.dataFinal >= now ? 'active' : 'inReview' 
+*/  
+
     //comparacao estendida, faz a mesma coisa que no caso acima 
     if (event === undefined) {
       return 'done'
-    } else if (event.dataFinal > now) {
+    } else if (event.dataFinal >= now) {
       return 'active'
     } else {
-      'inReview'
+      return 'inReview'
     }
-*/  
+  
   }
 }
 
@@ -48,9 +49,7 @@ class LoadLastEventRepositorySpy implements LoadLastEventRepository {
   async loadLastEvent ({ groupID }: {groupID: string }): Promise<{ dataFinal: Date } | undefined> {
     this.groupID = groupID
     this.callsCount++
-//    spyOn.name
     return this.output
-
   }
 }
 
@@ -123,5 +122,15 @@ describe('CheckLastEventStatus', () => {
     expect(status).toBe('inReview')
   })
 
+  it('retorna o status "active" quando o tempo atual é igual ao fim do evento', async () => {
+    const { sut, loadLastEventRepository } = makeSut()
+    loadLastEventRepository.output = {
+      dataFinal: new Date()
+    }
+
+    const status = await sut.perform({ groupID })
+
+    expect(status).toBe('active')
+  })
 })
 
