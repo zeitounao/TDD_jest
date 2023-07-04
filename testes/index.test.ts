@@ -186,7 +186,8 @@ describe('CheckLastEventStatus', () => {
     loadLastEventRepository.output = {
       dataFinal: new Date(new Date().getTime() + 1),
       horarioRevisaoEmHoras: 1,
-      horarioTerminoEventoEmHoras: 1
+      horarioTerminoEventoEmHoras: 123
+      
     }
 
     const status = await sut.perform({ groupID })
