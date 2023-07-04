@@ -15,7 +15,23 @@ class CheckLastEventStatus {
   //a linha de cima é igual a linha a baixo so que usamos(embaixo) objetos como parametros para deixar escalavel 
   async perform ({ groupID }: {groupID: string }): Promise<string> {
     const event = await this.loadLastEventRepository.loadLastEvent({ groupID })
-    return event === undefined ? 'done' : 'active'
+    //return event === undefined ? 'done' : 'active' //usado quando se tem 2 opções 
+    
+    //comparação acoplada
+    if (event === undefined) return 'done'
+    const now = new Date()
+    return event.dataFinal > now ? 'active' : 'inReview' 
+  
+/*
+    //comparacao estendida, faz a mesma coisa que no caso acima 
+    if (event === undefined) {
+      return 'done'
+    } else if (event.dataFinal > now) {
+      return 'active'
+    } else {
+      'inReview'
+    }
+*/  
   }
 }
 
@@ -85,7 +101,7 @@ describe('CheckLastEventStatus', () => {
 
   })
 
-  it('retorna o status "active" quando o tempo atual, esta antes do fim do evento ', async () => {
+  it('retorna o status "active" quando o tempo atual está antes do fim do evento', async () => {
     const { sut, loadLastEventRepository } = makeSut()
     loadLastEventRepository.output = {
       dataFinal: new Date(new Date().getTime() + 1)
@@ -94,6 +110,17 @@ describe('CheckLastEventStatus', () => {
     const status = await sut.perform({ groupID })
 
     expect(status).toBe('active')
+  })
+
+  it('retorna o status "emAnalise ou inReview" quando o tempo atual, esta pouco depois do fim do evento ', async () => {
+    const { sut, loadLastEventRepository } = makeSut()
+    loadLastEventRepository.output = {
+      dataFinal: new Date(new Date().getTime() - 1)
+    }
+
+    const status = await sut.perform({ groupID })
+
+    expect(status).toBe('inReview')
   })
 
 })
