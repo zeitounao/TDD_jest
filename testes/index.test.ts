@@ -37,16 +37,37 @@ class CheckLastEventStatus {
 }
 
 interface LoadLastEventRepository {
-  loadLastEvent: (input: {groupID: string }) => Promise<{ dataFinal: Date } | undefined>
+  loadLastEvent: (input: {groupID: string }) => Promise<{ 
+    dataFinal: Date, 
+    horarioRevisaoEmHoras: number, 
+    horarioTerminoEventoEmHoras: number 
+  } | undefined>
 }
 
 // o mock ta preocupado apenas com o input de um repositorio para a aplicação funcionar
 class LoadLastEventRepositorySpy implements LoadLastEventRepository {
   groupID?: string
   callsCount = 0
-  output?: { dataFinal: Date }
+  output?: { 
+    dataFinal: Date, 
+    horarioRevisaoEmHoras: number, 
+    horarioTerminoEventoEmHoras: number
+  }
 
-  async loadLastEvent ({ groupID }: {groupID: string }): Promise<{ dataFinal: Date } | undefined> {
+  //para realizar uma abstração no codigo na hor do teste usamos o metodo a seguir
+  setEndDateAfterNow () : void {
+    this.output = {
+      dataFinal: new Date(new Date().getTime() - 1),
+      horarioRevisaoEmHoras: 1,
+      horarioTerminoEventoEmHoras: 1
+    }
+  }
+
+  async loadLastEvent ({ groupID }: {groupID: string }): Promise<{ 
+    dataFinal: Date, 
+    horarioRevisaoEmHoras: number, 
+    horarioTerminoEventoEmHoras: number 
+  } | undefined> {
     this.groupID = groupID
     this.callsCount++
     return this.output
@@ -102,8 +123,18 @@ describe('CheckLastEventStatus', () => {
 
   it('retorna o status "active" quando o tempo atual está antes do fim do evento', async () => {
     const { sut, loadLastEventRepository } = makeSut()
+    loadLastEventRepository.setEndDateAfterNow()  
+
+    const status = await sut.perform({ groupID })
+
+    expect(status).toBe('active')
+  })
+  it('retorna o status "active" quando o tempo atual é igual ao fim do evento', async () => {
+    const { sut, loadLastEventRepository } = makeSut()
     loadLastEventRepository.output = {
-      dataFinal: new Date(new Date().getTime() + 1)
+      dataFinal: new Date(),
+      horarioRevisaoEmHoras: 1,
+      horarioTerminoEventoEmHoras: 1
     }
 
     const status = await sut.perform({ groupID })
@@ -111,26 +142,57 @@ describe('CheckLastEventStatus', () => {
     expect(status).toBe('active')
   })
 
-  it('retorna o status "emAnalise ou inReview" quando o tempo atual, esta pouco depois do fim do evento ', async () => {
+
+  it('retorna o status "emAnalise ou inReview" quando o tempo atual esta depois da hora do evento ', async () => {
     const { sut, loadLastEventRepository } = makeSut()
     loadLastEventRepository.output = {
-      dataFinal: new Date(new Date().getTime() - 1)
+      dataFinal: new Date(new Date().getTime() + 1),
+      horarioRevisaoEmHoras: 1,
+      horarioTerminoEventoEmHoras: 1
     }
 
     const status = await sut.perform({ groupID })
 
     expect(status).toBe('inReview')
   })
-
-  it('retorna o status "active" quando o tempo atual é igual ao fim do evento', async () => {
+  it('retorna o status "emAnalise ou inReview" quando o tempo atual esta e antes do fim do horario de revisao', async () => {
     const { sut, loadLastEventRepository } = makeSut()
     loadLastEventRepository.output = {
-      dataFinal: new Date()
+      dataFinal: new Date(new Date().getTime() - 1),
+      horarioRevisaoEmHoras: 1,
+      horarioTerminoEventoEmHoras: 1
     }
 
     const status = await sut.perform({ groupID })
 
-    expect(status).toBe('active')
+    expect(status).toBe('inReview')
   })
+  it('retorna o status "emAnalise ou inReview" quando o tempo atual é igual hora do evento ', async () => {
+    const { sut, loadLastEventRepository } = makeSut()
+    loadLastEventRepository.output = {
+      dataFinal: new Date(),
+      horarioRevisaoEmHoras: 1,
+      horarioTerminoEventoEmHoras: 1
+    }
+
+    const status = await sut.perform({ groupID })
+
+    expect(status).toBe('inReview')
+  })
+  
+  
+  it('retorna o status "done" quando o tempo atual esta depois do fim do horario de revisao', async () => {
+    const { sut, loadLastEventRepository } = makeSut()
+    loadLastEventRepository.output = {
+      dataFinal: new Date(new Date().getTime() + 1),
+      horarioRevisaoEmHoras: 1,
+      horarioTerminoEventoEmHoras: 1
+    }
+
+    const status = await sut.perform({ groupID })
+
+    expect(status).toBe('inReview')
+  })
+  
 })
 
