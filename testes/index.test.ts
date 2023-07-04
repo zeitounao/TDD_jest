@@ -1,4 +1,6 @@
-import { set, reset } from 'mockdate';
+//import { set, reset } from 'mockdate';
+//import MockDate from 'mockdate'
+
 
 class CheckLastEventStatus {
   constructor(private readonly loadLastEventRepository: LoadLastEventRepository) { }
@@ -15,21 +17,21 @@ class CheckLastEventStatus {
 }
 
 interface LoadLastEventRepository {
-  loadLastEvent: (groupID: string) => Promise<{ dataFinal:  Date} | undefined>
+  loadLastEvent: (groupID: string) => Promise<{ dataFinal: Date } | undefined>
 }
 
 // o mock ta preocupado apenas com o input de um repositorio para a aplicação funcionar
 class LoadLastEventRepositorySpy implements LoadLastEventRepository {
   groupID?: string
   callsCount = 0
-  output?: { dataFinal:  Date} 
+  output?: { dataFinal: Date }
 
-  async loadLastEvent(groupID: string): Promise<{ dataFinal:  Date} | undefined> {
+  async loadLastEvent(groupID: string): Promise<{ dataFinal: Date } | undefined> {
     this.groupID = groupID
     this.callsCount++
-    spyOn.name
+//    spyOn.name
     return this.output
-    
+
   }
 }
 
@@ -48,16 +50,16 @@ const makeSut = (): sutOutput => {
 }
 
 describe('CheckLastEventStatus', () => {
-
-  beforeAll(() => {
-    set (new Date())
+/* 
+  beforeAll(() => { 
+    MockDate.set(Date)
   })
 
   afterAll(() => {
-    reset (new Date())
+    MockDate.reset();
   })
-
-  it('should get last event data', async () => {
+*/
+  it('retorna a data do ultimo evento', async () => {
     const { sut, loadLastEventRepository } = makeSut()
 
     await sut.perform('any_group_id')
@@ -68,7 +70,7 @@ describe('CheckLastEventStatus', () => {
 
   })
 
-  it('retorna o status quando não temos eventos', async () => {
+  it('retorna o status "done" quando não temos eventos', async () => {
     const { sut, loadLastEventRepository } = makeSut()
     loadLastEventRepository.output = undefined
 
@@ -78,16 +80,15 @@ describe('CheckLastEventStatus', () => {
 
   })
 
-  it('retorna o status quando o tempo atual esta antes do fim do evento ', async () => {
+  it('retorna o status "active" quando o tempo atual, esta antes do fim do evento ', async () => {
     const { sut, loadLastEventRepository } = makeSut()
     loadLastEventRepository.output = {
-      dataFinal: new Date( new Date().getTime() + 1)
+      dataFinal: new Date(new Date().getTime() + 1)
     }
-  
+
     const status = await sut.perform('any_group_id')
-  
+
     expect(status).toBe('active')
-  
   })
 
 })
