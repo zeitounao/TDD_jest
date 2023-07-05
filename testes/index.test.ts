@@ -2,6 +2,7 @@
 //import { set, reset } from 'mockdate';
 //import MockDate from 'jest'
 
+type EventStatus = { status: string }
 
 class CheckLastEventStatus {
   constructor(private readonly loadLastEventRepository: LoadLastEventRepository) { }
@@ -13,26 +14,48 @@ class CheckLastEventStatus {
 
   //async perform(groupID: string): Promise<string> {  
   //a linha de cima é igual a linha a baixo so que usamos(embaixo) objetos como parametros para deixar escalavel 
+
   async perform({ groupID }: { groupID: string }): Promise<string> {
     const event = await this.loadLastEventRepository.loadLastEvent({ groupID })
-    //return event === undefined ? 'done' : 'active' //usado quando se tem 2 opções 
+    //return event === undefined ? 'done' : 'active' //usado quando se tem 2 opções
 
-    const now = new Date()
 
-    //comparação acoplada
-    if (event === undefined) return 'done'
-    return event.dataFinal >= now ? 'active' : 'inReview'
+    const now = new Date();
+    //    const duracaoRevisao = event?.dataFinal * 60 * 60 * 1000;
+    //    const revisaoDia = new Date(new Date().getTime() + duracaoRevisao);
+
+    //comparação acoplada com 3 operações 
+    //    if (event === undefined) return 'done'
+    //    return event.dataFinal >= now ? 'active' : 'inReview'
+
+
+    //comparacao estendida, faz a mesma coisa que no caso acima 
+    if (event === undefined) {
+      return 'done'
+    } else if (event.dataFinal >= now) {
+      return 'active'
+    } else {
+      return 'inReview'
+    }
+
+
 
     /*
-        //comparacao estendida, faz a mesma coisa que no caso acima 
-        if (event === undefined) {
-          return 'done'
-        } else if (event.dataFinal >= now) {
-          return 'active'
-        } else {
-          return 'inReview'
-        }
-    */
+    //comparacao estendida, faz a mesma coisa que no caso acima,
+    // so que mais claro de entender e com mais if 
+    if (event === undefined) { 
+      return  { status: 'done' }
+    }  
+    if (event.dataFinal >= now) { 
+      return { status: 'active' }
+    }  
+    if (revisaoDia >= now) { 
+      return { status: 'inReview' }
+    } 
+    else {
+      return { status: 'done' }
+    }
+*/
   }
 }
 
@@ -40,7 +63,6 @@ interface LoadLastEventRepository {
   loadLastEvent: (input: { groupID: string }) => Promise<{
     dataFinal: Date,
     horarioRevisaoEmHoras: number,
-    horarioTerminoEventoEmHoras: number
   } | undefined>
 }
 
@@ -51,7 +73,6 @@ class LoadLastEventRepositorySpy implements LoadLastEventRepository {
   output?: {
     dataFinal: Date,
     horarioRevisaoEmHoras: number,
-    horarioTerminoEventoEmHoras: number
   }
 
 
@@ -60,28 +81,24 @@ class LoadLastEventRepositorySpy implements LoadLastEventRepository {
     this.output = {
       dataFinal: new Date(new Date().getTime() + 1),
       horarioRevisaoEmHoras: 1,
-      horarioTerminoEventoEmHoras: 1
     }
   }
   agoraEstaIgualADataFinal(): void {
     this.output = {
       dataFinal: new Date(),
       horarioRevisaoEmHoras: 1,
-      horarioTerminoEventoEmHoras: 1
     }
   }
   agoraEstaDepoisDaDataFinal(): void {
     this.output = {
       dataFinal: new Date(new Date().getTime() - 1),
       horarioRevisaoEmHoras: 1,
-      horarioTerminoEventoEmHoras: 1
     }
   }
 
   async loadLastEvent({ groupID }: { groupID: string }): Promise<{
     dataFinal: Date,
     horarioRevisaoEmHoras: number,
-    horarioTerminoEventoEmHoras: number
   } | undefined> {
     this.groupID = groupID
     this.callsCount++
@@ -180,40 +197,41 @@ describe('CheckLastEventStatus', () => {
     loadLastEventRepository.output = {
       dataFinal: new Date(new Date().getTime() - horarioRevisaoEmMili + 1),
       horarioRevisaoEmHoras: 1,
-      horarioTerminoEventoEmHoras: 1
     }
 
     const status = await sut.perform({ groupID })
 
     expect(status).toBe('inReview')
   })
-  /*  
+
   it('retorna o status "emAnalise ou inReview" quando o tempo atual é igual hora do evento ', async () => {
+    const horarioRevisaoEmHoras = 1
+    const horarioRevisaoEmMili = (1 * 60 * 60 * 1000) * horarioRevisaoEmHoras
     const { sut, loadLastEventRepository } = makeSut()
     loadLastEventRepository.output = {
-      dataFinal: new Date(),
+      dataFinal: new Date(new Date().getTime() - horarioRevisaoEmMili),
       horarioRevisaoEmHoras: 1,
-      horarioTerminoEventoEmHoras: 1
     }
-  
+
     const status = await sut.perform({ groupID })
-  
+
     expect(status).toBe('inReview')
   })
-    
-    
+
+
   it('retorna o status "done" quando o tempo atual esta depois do fim do horario de revisao', async () => {
+    const horarioRevisaoEmHoras = 1
+    const horarioRevisaoEmMili = (1 * 60 * 60 * 1000) * horarioRevisaoEmHoras
     const { sut, loadLastEventRepository } = makeSut()
     loadLastEventRepository.output = {
-      dataFinal: new Date(new Date().getTime() + 1),
+      dataFinal: new Date(new Date().getTime() - horarioRevisaoEmMili - 1),
       horarioRevisaoEmHoras: 1,
-      horarioTerminoEventoEmHoras: 123
     }
-  
+
     const status = await sut.perform({ groupID })
-  
-    expect(status).toBe('inReview')
+
+    expect(status).toBe('done')
   })
-  */
+
 })
 
