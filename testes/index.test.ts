@@ -2,7 +2,29 @@
 //import { set, reset } from 'mockdate';
 //import MockDate from 'jest'
 
-type EventStatus = { status: string }
+class EventStatus { 
+  status: string 
+
+  constructor (event: { dataFinal: Date, horarioRevisaoEmHoras: number, }) {
+    const now = new Date();
+    const duracaoRevisao = (60 * 60 * 1000) * event?.horarioRevisaoEmHoras ;
+    const horarioRevisao = new Date(event?.dataFinal.getTime() + duracaoRevisao);
+
+    if (event === undefined) { 
+      this.status = 'done'
+    }  
+    if (event.dataFinal >= now) { 
+      this.status = 'active'
+    }  
+    if (horarioRevisao >= now) { 
+      this.status = 'inReview'
+    } 
+    else {
+      this.status = 'done'
+    }
+  }
+
+}
 
 class CheckLastEventStatus {
   constructor(private readonly loadLastEventRepository: LoadLastEventRepository) { }
@@ -15,47 +37,30 @@ class CheckLastEventStatus {
   //async perform(groupID: string): Promise<string> {  
   //a linha de cima é igual a linha a baixo so que usamos(embaixo) objetos como parametros para deixar escalavel 
 
-  async perform({ groupID }: { groupID: string }): Promise<string> {
-    const event = await this.loadLastEventRepository.loadLastEvent({ groupID })
+  async perform({ groupID }: { groupID: string }): Promise<EventStatus> {
+    const event = await this.loadLastEventRepository.loadLastEvent({ groupID });
+    return new EventStatus(event);
+    
     //return event === undefined ? 'done' : 'active' //usado quando se tem 2 opções
-
-
-    const now = new Date();
-    //    const duracaoRevisao = event?.dataFinal * 60 * 60 * 1000;
-    //    const revisaoDia = new Date(new Date().getTime() + duracaoRevisao);
 
     //comparação acoplada com 3 operações 
     //    if (event === undefined) return 'done'
     //    return event.dataFinal >= now ? 'active' : 'inReview'
 
-
+/*
     //comparacao estendida, faz a mesma coisa que no caso acima 
     if (event === undefined) {
-      return 'done'
-    } else if (event.dataFinal >= now) {
-      return 'active'
-    } else {
-      return 'inReview'
-    }
-
-
-
-    /*
-    //comparacao estendida, faz a mesma coisa que no caso acima,
-    // so que mais claro de entender e com mais if 
-    if (event === undefined) { 
-      return  { status: 'done' }
-    }  
-    if (event.dataFinal >= now) { 
-      return { status: 'active' }
-    }  
-    if (revisaoDia >= now) { 
-      return { status: 'inReview' }
-    } 
-    else {
       return { status: 'done' }
+    } else if (event.dataFinal >= now) {
+      return { status: 'active' }
+    } else {
+      return { status: 'inReview' }
     }
 */
+
+    //comparacao estendida, faz a mesma coisa que no caso acima,
+    // so que mais claro de entender e com mais if 
+
   }
 }
 
@@ -74,7 +79,6 @@ class LoadLastEventRepositorySpy implements LoadLastEventRepository {
     dataFinal: Date,
     horarioRevisaoEmHoras: number,
   }
-
 
   //para realizar uma abstração no codigo na hora do teste usamos o metodo a seguir
   agoraEstaAntesDaDataFinal(): void {
