@@ -76,9 +76,9 @@ class LoadLastEventRepositorySpy implements LoadLastEventRepository {
   groupID?: string
   callsCount = 0
   output?: {
-    dataFinal: Date,
-    horarioRevisaoEmHoras: number,
-  }
+    dataFinal: Date;
+    horarioRevisaoEmHoras: number;
+  } | undefined;
 
   //para realizar uma abstração no codigo na hora do teste usamos o metodo a seguir
   agoraEstaAntesDaDataFinal(): void {
