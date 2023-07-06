@@ -1,29 +1,24 @@
-//import { MockDate } from 'mockdate';
-//import { set, reset } from 'mockdate';
+//import { reset, set } from 'mockdate';
 //import MockDate from 'jest'
 
 class EventStatus { 
-  status: string 
+  status: 'active' | 'done' | 'inReview' 
 
-  constructor (event: { dataFinal: Date, horarioRevisaoEmHoras: number, }) {
-    const now = new Date();
-    const duracaoRevisao = (60 * 60 * 1000) * event?.horarioRevisaoEmHoras ;
-    const horarioRevisao = new Date(event?.dataFinal.getTime() + duracaoRevisao);
+  constructor (event?: { dataFinal: Date, horarioRevisaoEmHoras: number }) {
 
-    if (event === undefined) { 
+    if (event === undefined) {
       this.status = 'done'
-    }  
-    if (event.dataFinal >= now) { 
-      this.status = 'active'
-    }  
-    if (horarioRevisao >= now) { 
-      this.status = 'inReview'
-    } 
-    else {
-      this.status = 'done'
+      return
     }
+    const now = new Date();
+    if (event.dataFinal >= now) {
+      this.status = 'active'
+      return
+    }
+    const duracaoRevisao = event.horarioRevisaoEmHoras * (60 * 60 * 1000);
+    const horarioRevisao = new Date(event.dataFinal.getTime() + duracaoRevisao);
+    this.status = horarioRevisao >= now ? 'inReview' : 'done' 
   }
-
 }
 
 class CheckLastEventStatus {
@@ -61,13 +56,27 @@ class CheckLastEventStatus {
     //comparacao estendida, faz a mesma coisa que no caso acima,
     // so que mais claro de entender e com mais if 
 
+/*
+    if (event === undefined) { 
+      this.status = 'done'
+    }  
+    if (event.dataFinal >= now) { 
+      this.status = 'active'
+    }  
+    if (horarioRevisao >= now) { 
+      this.status = 'inReview'
+    } 
+    else {
+      this.status = 'done'
+    }
+*/
+
   }
 }
 
 interface LoadLastEventRepository {
   loadLastEvent: (input: { groupID: string }) => Promise<{
-    dataFinal: Date,
-    horarioRevisaoEmHoras: number,
+    dataFinal: Date, horarioRevisaoEmHoras: number,
   } | undefined>
 }
 
@@ -78,7 +87,7 @@ class LoadLastEventRepositorySpy implements LoadLastEventRepository {
   output?: {
     dataFinal: Date;
     horarioRevisaoEmHoras: number;
-  } | undefined;
+  };
 
   //para realizar uma abstração no codigo na hora do teste usamos o metodo a seguir
   agoraEstaAntesDaDataFinal(): void {
@@ -103,7 +112,7 @@ class LoadLastEventRepositorySpy implements LoadLastEventRepository {
   async loadLastEvent({ groupID }: { groupID: string }): Promise<{
     dataFinal: Date,
     horarioRevisaoEmHoras: number,
-  } | undefined> {
+  } | undefined> {  //linha duvidosa
     this.groupID = groupID
     this.callsCount++
     return this.output
@@ -127,15 +136,15 @@ const makeSut = (): sutOutput => {
 describe('CheckLastEventStatus', () => {
 
   const groupID = 'any_group_id'
-  /*
+/*  
     beforeAll(() => { 
-      MockDate.set(Date)
+      set (new Date())
     })
   
     afterAll(() => {
-      MockDate.reset()
+      reset()
     })
-  */
+*/  
   it('retorna a data do ultimo evento', async () => {
     const { sut, loadLastEventRepository } = makeSut()
 
