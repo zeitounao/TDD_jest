@@ -1,10 +1,9 @@
-//import { reset, set } from 'mockdate';
-//import MockDate from 'jest'
+import { reset, set } from 'mockdate';
 
-class EventStatus { 
-  status: 'active' | 'done' | 'inReview' 
+class EventStatus {
+  status: string
 
-  constructor (event?: { dataFinal: Date, horarioRevisaoEmHoras: number }) {
+  constructor(event?: { dataFinal: Date, horarioRevisaoEmHoras: number }) {
 
     if (event === undefined) {
       this.status = 'done'
@@ -17,65 +16,67 @@ class EventStatus {
     }
     const duracaoRevisao = event.horarioRevisaoEmHoras * (60 * 60 * 1000);
     const horarioRevisao = new Date(event.dataFinal.getTime() + duracaoRevisao);
-    this.status = horarioRevisao >= now ? 'inReview' : 'done' 
+    this.status = horarioRevisao >= now ? 'inReview' : 'done'
   }
 }
 
 class CheckLastEventStatus {
   constructor(private readonly loadLastEventRepository: LoadLastEventRepository) { }
-
-  // loadLastEventRepository: LoadLastEventRepository
-  // constructor (loadLastEventRepository: LoadLastEventRepository) {
-  //   this.loadLastEventRepository = loadLastEventRepository
-  // }    
+/*
+  loadLastEventRepository: LoadLastEventRepository
+  constructor(loadLastEventRepository: LoadLastEventRepository) {
+    this.loadLastEventRepository = loadLastEventRepository
+    F
+  }
+*/
 
   //async perform(groupID: string): Promise<string> {  
   //a linha de cima é igual a linha a baixo so que usamos(embaixo) objetos como parametros para deixar escalavel 
 
-  async perform({ groupID }: { groupID: string }): Promise<EventStatus> {
-    const event = await this.loadLastEventRepository.loadLastEvent({ groupID });
+  async perform(groupID: string): Promise<EventStatus> {
+    const event = await this.loadLastEventRepository.loadLastEvent({groupID});
     return new EventStatus(event);
-    
+
     //return event === undefined ? 'done' : 'active' //usado quando se tem 2 opções
 
     //comparação acoplada com 3 operações 
     //    if (event === undefined) return 'done'
     //    return event.dataFinal >= now ? 'active' : 'inReview'
 
-/*
-    //comparacao estendida, faz a mesma coisa que no caso acima 
-    if (event === undefined) {
-      return { status: 'done' }
-    } else if (event.dataFinal >= now) {
-      return { status: 'active' }
-    } else {
-      return { status: 'inReview' }
-    }
-*/
+    /*
+        //comparacao estendida, faz a mesma coisa que no caso acima 
+        if (event === undefined) {
+          return { status: 'done' }
+        } else if (event.dataFinal >= now) {
+          return { status: 'active' }
+        } else {
+          return { status: 'inReview' }
+        }
+    */
 
     //comparacao estendida, faz a mesma coisa que no caso acima,
     // so que mais claro de entender e com mais if 
 
-/*
-    if (event === undefined) { 
-      this.status = 'done'
-    }  
-    if (event.dataFinal >= now) { 
-      this.status = 'active'
-    }  
-    if (horarioRevisao >= now) { 
-      this.status = 'inReview'
-    } 
-    else {
-      this.status = 'done'
-    }
-*/
+    /*
+        if (event === undefined) { 
+          this.status = 'done'
+        }  
+        if (event.dataFinal >= now) { 
+          this.status = 'active'
+        }  
+        if (horarioRevisao >= now) { 
+          this.status = 'inReview'
+        } 
+        else {
+          this.status = 'done'
+        }
+    */
 
   }
 }
 
 interface LoadLastEventRepository {
-  loadLastEvent: (input: { groupID: string }) => Promise<{
+  loadLastEvent: (input: { groupID: string }) => Promise<{ //dar um jeito para nao retornar um objeto
     dataFinal: Date, horarioRevisaoEmHoras: number,
   } | undefined>
 }
@@ -109,10 +110,10 @@ class LoadLastEventRepositorySpy implements LoadLastEventRepository {
     }
   }
 
-  async loadLastEvent({ groupID }: { groupID: string }): Promise<{
+  async loadLastEvent({ groupID }: { groupID: string }): Promise<{  //dar um jeito para nao retornar um objeto
     dataFinal: Date,
     horarioRevisaoEmHoras: number,
-  } | undefined> {  //linha duvidosa
+  } | undefined> {  
     this.groupID = groupID
     this.callsCount++
     return this.output
@@ -136,19 +137,19 @@ const makeSut = (): sutOutput => {
 describe('CheckLastEventStatus', () => {
 
   const groupID = 'any_group_id'
-/*  
-    beforeAll(() => { 
-      set (new Date())
-    })
-  
-    afterAll(() => {
-      reset()
-    })
-*/  
+
+  beforeAll(() => {
+    set(new Date())
+  })
+
+  afterAll(() => {
+    reset()
+  })
+
   it('retorna a data do ultimo evento', async () => {
     const { sut, loadLastEventRepository } = makeSut()
 
-    await sut.perform({ groupID })
+    await sut.perform(groupID)
 
     expect(loadLastEventRepository.groupID).toBe(groupID)
     expect(loadLastEventRepository.callsCount).toBe(1)
@@ -160,7 +161,7 @@ describe('CheckLastEventStatus', () => {
     const { sut, loadLastEventRepository } = makeSut()
     loadLastEventRepository.output = undefined
 
-    const status = await sut.perform({ groupID })
+    const status = await sut.perform(groupID)
 
     expect(status).toBe('done')
 
@@ -179,7 +180,7 @@ describe('CheckLastEventStatus', () => {
     */
     loadLastEventRepository.agoraEstaAntesDaDataFinal()
 
-    const status = await sut.perform({ groupID })
+    const status = await sut.perform(groupID)
 
     expect(status).toBe('active')
   })
@@ -188,7 +189,7 @@ describe('CheckLastEventStatus', () => {
     const { sut, loadLastEventRepository } = makeSut()
     loadLastEventRepository.agoraEstaIgualADataFinal()
 
-    const status = await sut.perform({ groupID })
+    const status = await sut.perform(groupID)
 
     expect(status).toBe('active')
   })
@@ -198,7 +199,7 @@ describe('CheckLastEventStatus', () => {
     const { sut, loadLastEventRepository } = makeSut()
     loadLastEventRepository.agoraEstaDepoisDaDataFinal()
 
-    const status = await sut.perform({ groupID })
+    const status = await sut.perform(groupID)
 
     expect(status).toBe('inReview')
   })
@@ -212,7 +213,7 @@ describe('CheckLastEventStatus', () => {
       horarioRevisaoEmHoras: 1,
     }
 
-    const status = await sut.perform({ groupID })
+    const status = await sut.perform(groupID)
 
     expect(status).toBe('inReview')
   })
@@ -226,7 +227,7 @@ describe('CheckLastEventStatus', () => {
       horarioRevisaoEmHoras: 1,
     }
 
-    const status = await sut.perform({ groupID })
+    const status = await sut.perform(groupID)
 
     expect(status).toBe('inReview')
   })
@@ -241,7 +242,7 @@ describe('CheckLastEventStatus', () => {
       horarioRevisaoEmHoras: 1,
     }
 
-    const status = await sut.perform({ groupID })
+    const status = await sut.perform(groupID)
 
     expect(status).toBe('done')
   })
