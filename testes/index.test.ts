@@ -22,27 +22,28 @@ class EventStatus {
 
 class CheckLastEventStatus {
   constructor(private readonly loadLastEventRepository: LoadLastEventRepository) { }
-/*
-  loadLastEventRepository: LoadLastEventRepository
-  constructor(loadLastEventRepository: LoadLastEventRepository) {
-    this.loadLastEventRepository = loadLastEventRepository
-    F
-  }
-*/
+  /*
+    loadLastEventRepository: LoadLastEventRepository
+    constructor(loadLastEventRepository: LoadLastEventRepository) {
+      this.loadLastEventRepository = loadLastEventRepository
+      F
+    }
+  */
 
   //async perform(groupID: string): Promise<string> {  
   //a linha de cima é igual a linha a baixo so que usamos(embaixo) objetos como parametros para deixar escalavel 
 
   async perform(groupID: string): Promise<EventStatus> {
-    const event = await this.loadLastEventRepository.loadLastEvent({groupID});
+    const event = await this.loadLastEventRepository.loadLastEvent({ groupID });
     return new EventStatus(event);
 
     //return event === undefined ? 'done' : 'active' //usado quando se tem 2 opções
 
-    //comparação acoplada com 3 operações 
-    //    if (event === undefined) return 'done'
-    //    return event.dataFinal >= now ? 'active' : 'inReview'
-
+    /*
+      comparação acoplada com 3 operações 
+        if (event === undefined) return 'done'
+        return event.dataFinal >= now ? 'active' : 'inReview'
+    */
     /*
         //comparacao estendida, faz a mesma coisa que no caso acima 
         if (event === undefined) {
@@ -113,7 +114,7 @@ class LoadLastEventRepositorySpy implements LoadLastEventRepository {
   async loadLastEvent({ groupID }: { groupID: string }): Promise<{  //dar um jeito para nao retornar um objeto
     dataFinal: Date,
     horarioRevisaoEmHoras: number,
-  } | undefined> {  
+  } | undefined> {
     this.groupID = groupID
     this.callsCount++
     return this.output
@@ -163,7 +164,8 @@ describe('CheckLastEventStatus', () => {
 
     const status = await sut.perform(groupID)
 
-    expect(status).toBe('done')
+    //expect(status).toBe('done')
+    expect(status).toEqual({ status: "done" })
 
   })
 
@@ -182,7 +184,8 @@ describe('CheckLastEventStatus', () => {
 
     const status = await sut.perform(groupID)
 
-    expect(status).toBe('active')
+    //expect(status).toBe('active')
+    expect(status).toEqual({ status: "active" })
   })
 
   it('retorna o status "active" quando o tempo atual é igual ao fim do evento', async () => {
@@ -191,7 +194,8 @@ describe('CheckLastEventStatus', () => {
 
     const status = await sut.perform(groupID)
 
-    expect(status).toBe('active')
+    //expect(status).toBe('active')
+    expect(status).toEqual({ status: "active" })
   })
 
 
@@ -201,7 +205,8 @@ describe('CheckLastEventStatus', () => {
 
     const status = await sut.perform(groupID)
 
-    expect(status).toBe('inReview')
+    //expect(status).toBe('inReview')
+    expect(status).toEqual({ status: "inReview" })
   })
 
   it('retorna o status "emAnalise ou inReview" quando o tempo atual esta antes do fim do horario de revisao', async () => {
@@ -215,7 +220,8 @@ describe('CheckLastEventStatus', () => {
 
     const status = await sut.perform(groupID)
 
-    expect(status).toBe('inReview')
+    //expect(status).toBe('inReview')
+    expect(status).toEqual({ status: "inReview" })
   })
 
   it('retorna o status "emAnalise ou inReview" quando o tempo atual é igual hora do evento ', async () => {
@@ -229,7 +235,8 @@ describe('CheckLastEventStatus', () => {
 
     const status = await sut.perform(groupID)
 
-    expect(status).toBe('inReview')
+    //expect(status).toBe('inReview')
+    expect(status).toEqual({ status: "inReview" })
   })
 
 
@@ -244,7 +251,9 @@ describe('CheckLastEventStatus', () => {
 
     const status = await sut.perform(groupID)
 
-    expect(status).toBe('done')
+    //expect(status).toBe('done')
+    expect(status).toEqual({ status: "done" })
+
   })
 
 })
