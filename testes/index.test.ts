@@ -256,5 +256,11 @@ describe('CheckLastEventStatus', () => {
 
   })
 
+  it('testes aleatorios', () => {
+    const mockFn = jest.fn ( ) ;
+    mockFn.mockName('eliezer')
+    mockFn.getMockName()
+  })
+
 })
 
